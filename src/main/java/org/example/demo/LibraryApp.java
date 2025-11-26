@@ -1,6 +1,8 @@
 package org.example.demo;
 
 import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -19,6 +21,21 @@ public class LibraryApp extends Application {
     private MenuBar menuBar;
     private VBox sidebar;
     private BorderPane contentArea;
+    
+    // ObservableLists for TableViews (maintained in controller)
+    private ObservableList<Author> authorList;
+    private ObservableList<Book> bookList;
+    private ObservableList<Borrower> borrowerList;
+    
+    // TableViews (maintained in controller)
+    private TableView<Author> authorTable;
+    private TableView<Book> bookTable;
+    private TableView<Borrower> borrowerTable;
+    
+    // DAOs
+    private AuthorDAO authorDAO;
+    private BookDAO bookDAO;
+    private BorrowerDAO borrowerDAO;
     
     // Views
     private LoginView loginView;
@@ -66,6 +83,21 @@ public class LibraryApp extends Application {
         // Create main layout
         mainLayout = new BorderPane();
         
+        // Initialize DAOs
+        authorDAO = new AuthorDAO();
+        bookDAO = new BookDAO();
+        borrowerDAO = new BorrowerDAO();
+        
+        // Initialize ObservableLists
+        authorList = FXCollections.observableArrayList();
+        bookList = FXCollections.observableArrayList();
+        borrowerList = FXCollections.observableArrayList();
+        
+        // Load initial data
+        reloadAuthors();
+        reloadBooks();
+        reloadBorrowers();
+        
         // Create menu bar
         createMenuBar();
         mainLayout.setTop(menuBar);
@@ -85,6 +117,33 @@ public class LibraryApp extends Application {
         Scene scene = new Scene(mainLayout, 1400, 900);
         scene.getStylesheets().add(getClass().getResource("/org/example/demo/styles.css").toExternalForm());
         primaryStage.setScene(scene);
+    }
+    
+    /**
+     * Reload authors from database and update ObservableList
+     */
+    private void reloadAuthors() {
+        java.util.List<Author> list = authorDAO.getAll();
+        if (list == null) list = new java.util.ArrayList<>();
+        authorList.setAll(list);
+    }
+    
+    /**
+     * Reload books from database and update ObservableList
+     */
+    private void reloadBooks() {
+        java.util.List<Book> list = bookDAO.getAll();
+        if (list == null) list = new java.util.ArrayList<>();
+        bookList.setAll(list);
+    }
+    
+    /**
+     * Reload borrowers from database and update ObservableList
+     */
+    private void reloadBorrowers() {
+        java.util.List<Borrower> list = borrowerDAO.getAll();
+        if (list == null) list = new java.util.ArrayList<>();
+        borrowerList.setAll(list);
     }
 
     private void createMenuBar() {
@@ -153,52 +212,73 @@ public class LibraryApp extends Application {
     }
 
     private void showAuthorView() {
-        TableView<Author> table = new getTable<Author>().gettable(Author.class, DataCollector.getAllAuthor());
-        HBox searchBox = new SearchBox<Author>().createSearchBox(Author.class, DataCollector.getAllAuthor(), table);
+        // Create or reuse table
+        if (authorTable == null) {
+            authorTable = new getTable<Author>().gettable(Author.class, authorList);
+            authorTable.setItems(authorList);
+        }
+        
+        HBox searchBox = new SearchBox<Author>().createSearchBox(Author.class, authorList, authorTable);
         
         boolean canEdit = SessionManager.canEdit();
         GenericFormBuilder<Author> formBuilder = new GenericFormBuilder<>(
             Author.class, 
-            new AuthorDAO(), 
-            table,
-            canEdit
+            authorDAO, 
+            authorTable,
+            authorList,
+            canEdit,
+            () -> reloadAuthors() // Reload callback
         );
         
-        contentArea.setCenter(table);
+        contentArea.setCenter(authorTable);
         contentArea.setBottom(formBuilder.buildForm());
         contentArea.setRight(searchBox);
     }
 
     private void showBookView() {
-        TableView<Book> table = new getTable<Book>().gettable(Book.class, DataCollector.getAllBooks());
-        HBox searchBox = new SearchBox<Book>().createSearchBox(Book.class, DataCollector.getAllBooks(), table);
+        // Create or reuse table
+        if (bookTable == null) {
+            bookTable = new getTable<Book>().gettable(Book.class, bookList);
+            bookTable.setItems(bookList);
+        }
+        
+        HBox searchBox = new SearchBox<Book>().createSearchBox(Book.class, bookList, bookTable);
         
         boolean canEdit = SessionManager.canEdit();
         GenericFormBuilder<Book> formBuilder = new GenericFormBuilder<>(
             Book.class, 
-            new BookDAO(), 
-            table,
-            canEdit
+            bookDAO, 
+            bookTable,
+            bookList,
+            canEdit,
+            () -> reloadBooks() // Reload callback
         );
         
-        contentArea.setCenter(table);
+        contentArea.setCenter(bookTable);
         contentArea.setBottom(formBuilder.buildForm());
         contentArea.setRight(searchBox);
     }
 
     private void showBorrowerView() {
-        TableView<Borrower> table = new getTable<Borrower>().gettable(Borrower.class, DataCollector.getAllBorrower());
-        HBox searchBox = new SearchBox<Borrower>().createSearchBox(Borrower.class, DataCollector.getAllBorrower(), table);
+        // Create or reuse table
+        if (borrowerTable == null) {
+            borrowerTable = new getTable<Borrower>().gettable(Borrower.class, borrowerList);
+            borrowerTable.setItems(borrowerList);
+        }
+        
+        HBox searchBox = new SearchBox<Borrower>().createSearchBox(Borrower.class, borrowerList, borrowerTable);
         
         boolean canEdit = SessionManager.canEdit();
         GenericFormBuilder<Borrower> formBuilder = new GenericFormBuilder<>(
             Borrower.class, 
-            new BorrowerDAO(), 
-            table,
-            canEdit
+            borrowerDAO, 
+            borrowerTable,
+            borrowerList,
+            canEdit,
+            () -> reloadBorrowers() // Reload callback
         );
         
-        contentArea.setCenter(table);
+        contentArea.setCenter(borrowerTable);
         contentArea.setBottom(formBuilder.buildForm());
         contentArea.setRight(searchBox);
     }

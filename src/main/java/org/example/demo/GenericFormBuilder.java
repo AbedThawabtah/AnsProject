@@ -15,19 +15,39 @@ public class GenericFormBuilder<T> {
     private final Class<T> clazz;
     private final GenericDAO<T> dao;
     private final TableView<T> table;
+    private final javafx.collections.ObservableList<T> observableList; // Backing list for TableView
+    private final Runnable reloadCallback; // Callback to reload from database
     private boolean canEdit = true; // For role-based access control
 
     public GenericFormBuilder(Class<T> clazz, GenericDAO<T> dao, TableView<T> table) {
         this.clazz = clazz;
         this.dao = dao;
         this.table = table;
+        this.observableList = null;
+        this.reloadCallback = null;
     }
 
     public GenericFormBuilder(Class<T> clazz, GenericDAO<T> dao, TableView<T> table, boolean canEdit) {
         this.clazz = clazz;
         this.dao = dao;
         this.table = table;
+        this.observableList = null;
+        this.reloadCallback = null;
         this.canEdit = canEdit;
+    }
+    
+    /**
+     * Constructor with ObservableList and reload callback for direct list updates
+     */
+    public GenericFormBuilder(Class<T> clazz, GenericDAO<T> dao, TableView<T> table, 
+                             javafx.collections.ObservableList<T> observableList, 
+                             boolean canEdit, Runnable reloadCallback) {
+        this.clazz = clazz;
+        this.dao = dao;
+        this.table = table;
+        this.observableList = observableList;
+        this.canEdit = canEdit;
+        this.reloadCallback = reloadCallback;
     }
 
     public GridPane buildForm() {
@@ -99,8 +119,17 @@ public class GenericFormBuilder<T> {
                     showAlert(Alert.AlertType.INFORMATION, "Success", "Record added successfully!");
                     // Clear all input fields
                     fieldInputs.values().forEach(TextField::clear);
-                    // Refresh table to show new record
-                    refreshTable();
+                    
+                    // Update TableView: reload from database to get auto-generated ID
+                    if (reloadCallback != null && observableList != null) {
+                        // Reload from database and update ObservableList
+                        reloadCallback.run();
+                        // Refresh table to show new record
+                        table.refresh();
+                    } else {
+                        // Fallback: use old refresh method
+                        refreshTable();
+                    }
                 } else {
                     showAlert(Alert.AlertType.ERROR, "Error", "Failed to add record. Please check your input and try again.");
                 }
@@ -161,8 +190,17 @@ public class GenericFormBuilder<T> {
                 
                 if (success) {
                     showAlert(Alert.AlertType.INFORMATION, "Success", "Record updated successfully!");
-                    // Refresh table to show updated data
-                    refreshTable();
+                    
+                    // Update TableView: reload from database to get latest data
+                    if (reloadCallback != null && observableList != null) {
+                        // Reload from database and update ObservableList
+                        reloadCallback.run();
+                        // Refresh table to show updated data
+                        table.refresh();
+                    } else {
+                        // Fallback: use old refresh method
+                        refreshTable();
+                    }
                 } else {
                     showAlert(Alert.AlertType.ERROR, "Error", "Failed to update record. Please check your input and try again.");
                 }
@@ -215,8 +253,22 @@ public class GenericFormBuilder<T> {
                         showAlert(Alert.AlertType.INFORMATION, "Success", "Record deleted successfully!");
                         // Clear input fields
                         fieldInputs.values().forEach(TextField::clear);
-                        // Refresh table immediately to show updated data
-                        refreshTable();
+                        
+                        // Update TableView: remove from ObservableList directly
+                        if (observableList != null) {
+                            // Remove the selected item directly from the list
+                            observableList.remove(selected);
+                            // Refresh table to update display
+                            table.refresh();
+                        } else {
+                            // Fallback: reload from database
+                            if (reloadCallback != null) {
+                                reloadCallback.run();
+                                table.refresh();
+                            } else {
+                                refreshTable();
+                            }
+                        }
                     } else {
                         showAlert(Alert.AlertType.ERROR, "Error", "Failed to delete record. It may be referenced by other records.");
                     }
