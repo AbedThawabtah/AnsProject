@@ -1,159 +1,275 @@
 package org.example.demo;
 
 import javafx.application.Application;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.StringProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-import java.time.LocalDate;
-import java.util.Optional;
-
+/**
+ * Main application class for Library Management System
+ */
 public class LibraryApp extends Application {
 
+    private Stage primaryStage;
+    private BorderPane mainLayout;
+    private MenuBar menuBar;
+    private VBox sidebar;
+    private BorderPane contentArea;
+    
+    // Views
+    private LoginView loginView;
+    private SignupView signupView;
+    private ReportsView reportsView;
+    private AboutView aboutView;
 
-	// Search boxes
-	private HBox authorSearchBox;
-	private HBox bookSearchBox;
-	private HBox borrowerSearchBox;
-	private HBox borrowerTypeSearchBox;
-	private HBox loanSearchBox;
-	private HBox loanPeriodSearchBox;
-	private HBox publisherSearchBox;
-	private HBox saleSearchBox;
+    @Override
+    public void start(Stage primaryStage) {
+        this.primaryStage = primaryStage;
+        
+        // Initialize database connection and create Users table
+        UserDAO.createUsersTable();
+        
+        // Show login view first
+        showLoginView();
+        
+        primaryStage.setTitle("Library Management System");
+        primaryStage.setMinWidth(1000);
+        primaryStage.setMinHeight(700);
+        primaryStage.show();
+    }
 
-	@Override
-	public void start(Stage primaryStage) {
-		// left buttons
-		Button btnAuthor = new Button("Author");
-		Button btnBook = new Button("Book");
-		Button btnBorrower = new Button("Borrower");
-		Button btnBorrowerType = new Button("BorrowerType");
-		Button btnLoan = new Button("Loan");
-		Button btnLoanPeriod = new Button("LoanPeriod");
-		Button btnPublisher = new Button("Publisher");
-		Button btnSale = new Button("Sale");
+    private void showLoginView() {
+        loginView = new LoginView();
+        loginView.setOnLoginSuccess(() -> showMainWindow());
+        loginView.setOnSignupClick(() -> showSignupView());
+        
+        Scene scene = new Scene(loginView.getRoot(), 500, 400);
+        scene.getStylesheets().add(getClass().getResource("/org/example/demo/styles.css").toExternalForm());
+        primaryStage.setScene(scene);
+    }
 
-		double btnWidth = 200;
-		for (Button b : new Button[]{btnAuthor, btnBook, btnBorrower, btnBorrowerType, btnLoan, btnLoanPeriod, btnPublisher, btnSale}) {
-			b.setPrefWidth(btnWidth);
-			b.setPrefHeight(40);
-			b.setDisable(false); // explicitly enabled
-		}
+    private void showSignupView() {
+        signupView = new SignupView();
+        signupView.setOnSignupSuccess(() -> showLoginView());
+        signupView.setOnBackClick(() -> showLoginView());
+        
+        Scene scene = new Scene(signupView.getRoot(), 500, 500);
+        scene.getStylesheets().add(getClass().getResource("/org/example/demo/styles.css").toExternalForm());
+        primaryStage.setScene(scene);
+    }
 
-		VBox vbox = new VBox(12);
-		vbox.setPadding(new Insets(20));
-		vbox.getChildren().addAll(
-				btnAuthor, btnBook, btnBorrower, btnBorrowerType, btnLoan, btnLoanPeriod, btnPublisher, btnSale
-		);
+    private void showMainWindow() {
+        // Create main layout
+        mainLayout = new BorderPane();
+        
+        // Create menu bar
+        createMenuBar();
+        mainLayout.setTop(menuBar);
+        
+        // Create sidebar
+        createSidebar();
+        mainLayout.setLeft(sidebar);
+        
+        // Create content area
+        contentArea = new BorderPane();
+        mainLayout.setCenter(contentArea);
+        
+        // Show default view (Authors)
+        showAuthorView();
+        
+        // Create scene with CSS
+        Scene scene = new Scene(mainLayout, 1400, 900);
+        scene.getStylesheets().add(getClass().getResource("/org/example/demo/styles.css").toExternalForm());
+        primaryStage.setScene(scene);
+    }
 
-// GenericFormBuilder(Class<T> clazz, GenericDAO<T> dao, TableView<T> table)
-		// search boxes
-		authorSearchBox = new SearchBox<Author>().createSearchBox(Author.class,DataCollector.getAllAuthor(),new getTable<Author>().gettable(Author.class,DataCollector.getAllAuthor()));
-		bookSearchBox = new SearchBox<Book>().createSearchBox(Book.class,DataCollector.getAllBooks(),new getTable<Book>().gettable(Book.class,DataCollector.getAllBooks()));
-		borrowerSearchBox = new SearchBox<Borrower>().createSearchBox(Borrower.class,DataCollector.getAllBorrower(),new getTable<Borrower>().gettable(Borrower.class,DataCollector.getAllBorrower()));
-		borrowerTypeSearchBox = new SearchBox<BorrowerType>().createSearchBox(BorrowerType.class,DataCollector.getAllBorrowerType(),new getTable<BorrowerType>().gettable(BorrowerType.class,DataCollector.getAllBorrowerType()));
-		loanSearchBox = new SearchBox<Loan>().createSearchBox(Loan.class,DataCollector.getAllLoan(),new getTable<Loan>().gettable(Loan.class,DataCollector.getAllLoan()));
-		loanPeriodSearchBox =new SearchBox<LoanPeriod>().createSearchBox(LoanPeriod.class,DataCollector.getAllLoanPeriod(),new getTable<LoanPeriod>().gettable(LoanPeriod.class,DataCollector.getAllLoanPeriod()));
-		publisherSearchBox =new SearchBox<Publisher>().createSearchBox(Publisher.class,DataCollector.getAllPublisher(),new getTable<Publisher>().gettable(Publisher.class,DataCollector.getAllPublisher()));
-		saleSearchBox =new SearchBox<Sale>().createSearchBox(Sale.class,DataCollector.getAllSale(),new getTable<Sale>().gettable(Sale.class,DataCollector.getAllSale()));
+    private void createMenuBar() {
+        menuBar = new MenuBar();
+        
+        // File menu
+        Menu fileMenu = new Menu("File");
+        MenuItem logoutItem = new MenuItem("Logout");
+        logoutItem.setOnAction(e -> {
+            SessionManager.logout();
+            showLoginView();
+        });
+        MenuItem exitItem = new MenuItem("Exit");
+        exitItem.setOnAction(e -> primaryStage.close());
+        fileMenu.getItems().addAll(logoutItem, new SeparatorMenuItem(), exitItem);
+        
+        // View menu
+        Menu viewMenu = new Menu("View");
+        MenuItem reportsItem = new MenuItem("Reports");
+        reportsItem.setOnAction(e -> showReportsView());
+        MenuItem aboutItem = new MenuItem("About");
+        aboutItem.setOnAction(e -> showAboutView());
+        viewMenu.getItems().addAll(reportsItem, new SeparatorMenuItem(), aboutItem);
+        
+        // User info
+        Menu userMenu = new Menu("User");
+        User currentUser = SessionManager.getCurrentUser();
+        if (currentUser != null) {
+            MenuItem userInfoItem = new MenuItem("Logged in as: " + currentUser.getUsername() + " (" + currentUser.getRole() + ")");
+            userInfoItem.setDisable(true);
+            userMenu.getItems().add(userInfoItem);
+        }
+        
+        menuBar.getMenus().addAll(fileMenu, viewMenu, userMenu);
+    }
 
+    private void createSidebar() {
+        sidebar = new VBox(8);
+        sidebar.setPadding(new Insets(20));
+        sidebar.setPrefWidth(200);
+        sidebar.getStyleClass().add("sidebar");
+        
+        // Create buttons for each entity
+        Button btnAuthor = createSidebarButton("Authors", () -> showAuthorView());
+        Button btnBook = createSidebarButton("Books", () -> showBookView());
+        Button btnBorrower = createSidebarButton("Borrowers", () -> showBorrowerView());
+        Button btnPublisher = createSidebarButton("Publishers", () -> showPublisherView());
+        Button btnLoan = createSidebarButton("Loans", () -> showLoanView());
+        Button btnSale = createSidebarButton("Sales", () -> showSaleView());
+        Button btnBorrowerType = createSidebarButton("Borrower Types", () -> showBorrowerTypeView());
+        Button btnLoanPeriod = createSidebarButton("Loan Periods", () -> showLoanPeriodView());
+        
+        sidebar.getChildren().addAll(
+            btnAuthor, btnBook, btnBorrower, btnPublisher,
+            btnLoan, btnSale, btnBorrowerType, btnLoanPeriod
+        );
+    }
 
-		BorderPane borderpane = new BorderPane();
-		borderpane.setLeft(vbox);
+    private Button createSidebarButton(String text, Runnable action) {
+        Button btn = new Button(text);
+        btn.setPrefWidth(180);
+        btn.setPrefHeight(40);
+        btn.getStyleClass().add("sidebar-button");
+        btn.setOnAction(e -> action.run());
+        return btn;
+    }
 
-		// default view
-		borderpane.setCenter( new getTable<Author>().gettable(Author.class
-				,DataCollector.getAllAuthor()));
-		borderpane.setBottom(new GenericFormBuilder(Author.class,new Operation<Author>(), new getTable().gettable(Author.class,DataCollector.getAllAuthor())).buildForm());
-		borderpane.setRight(authorSearchBox);
+    private void showAuthorView() {
+        TableView<Author> table = new getTable<Author>().gettable(Author.class, DataCollector.getAllAuthor());
+        HBox searchBox = new SearchBox<Author>().createSearchBox(Author.class, DataCollector.getAllAuthor(), table);
+        
+        boolean canEdit = SessionManager.canEdit();
+        GenericFormBuilder<Author> formBuilder = new GenericFormBuilder<>(
+            Author.class, 
+            new AuthorDAO(), 
+            table,
+            canEdit
+        );
+        
+        contentArea.setCenter(table);
+        contentArea.setBottom(formBuilder.buildForm());
+        contentArea.setRight(searchBox);
+    }
 
-		// button handlers to show table + form + search
-		btnAuthor.setOnAction(e -> {
-			borderpane.setCenter( new getTable<Author>().gettable(Author.class
-					,DataCollector.getAllAuthor()));
-			borderpane.setBottom(new GenericFormBuilder(Author.class,new Operation<Author>(), new getTable().gettable(Author.class,DataCollector.getAllAuthor())).buildForm());
-			borderpane.setRight(authorSearchBox);
-		});
+    private void showBookView() {
+        TableView<Book> table = new getTable<Book>().gettable(Book.class, DataCollector.getAllBooks());
+        HBox searchBox = new SearchBox<Book>().createSearchBox(Book.class, DataCollector.getAllBooks(), table);
+        
+        boolean canEdit = SessionManager.canEdit();
+        GenericFormBuilder<Book> formBuilder = new GenericFormBuilder<>(
+            Book.class, 
+            new BookDAO(), 
+            table,
+            canEdit
+        );
+        
+        contentArea.setCenter(table);
+        contentArea.setBottom(formBuilder.buildForm());
+        contentArea.setRight(searchBox);
+    }
 
-		btnBook.setOnAction(e -> {
-			borderpane.setCenter( new getTable<Book>().gettable(Book.class
-					,DataCollector.getAllBooks()));
-			borderpane.setBottom(new GenericFormBuilder(Book.class,new Operation<Book>(), new getTable().gettable(Book.class,DataCollector.getAllBooks())).buildForm());
-			borderpane.setRight(bookSearchBox);
-		});
+    private void showBorrowerView() {
+        TableView<Borrower> table = new getTable<Borrower>().gettable(Borrower.class, DataCollector.getAllBorrower());
+        HBox searchBox = new SearchBox<Borrower>().createSearchBox(Borrower.class, DataCollector.getAllBorrower(), table);
+        
+        boolean canEdit = SessionManager.canEdit();
+        GenericFormBuilder<Borrower> formBuilder = new GenericFormBuilder<>(
+            Borrower.class, 
+            new BorrowerDAO(), 
+            table,
+            canEdit
+        );
+        
+        contentArea.setCenter(table);
+        contentArea.setBottom(formBuilder.buildForm());
+        contentArea.setRight(searchBox);
+    }
 
-		btnBorrower.setOnAction(e -> {
-			borderpane.setCenter( new getTable<Borrower>().gettable(Borrower.class
-					,DataCollector.getAllBorrower()));
-			borderpane.setBottom(new GenericFormBuilder(Borrower.class,new Operation<Borrower>(), new getTable().gettable(Borrower.class,DataCollector.getAllSale())).buildForm());;
-			borderpane.setRight(borrowerSearchBox);
-		});
+    private void showPublisherView() {
+        TableView<Publisher> table = new getTable<Publisher>().gettable(Publisher.class, DataCollector.getAllPublisher());
+        HBox searchBox = new SearchBox<Publisher>().createSearchBox(Publisher.class, DataCollector.getAllPublisher(), table);
+        
+        // Publishers are view-only for now (no DAO implemented)
+        contentArea.setCenter(table);
+        contentArea.setBottom(new VBox()); // Empty form for view-only
+        contentArea.setRight(searchBox);
+    }
 
-		btnBorrowerType.setOnAction(e -> {
-			borderpane.setCenter(new getTable<BorrowerType>().gettable(BorrowerType.class
-					,DataCollector.getAllBorrowerType()));
-			borderpane.setBottom(new GenericFormBuilder(BorrowerType.class,new Operation<BorrowerType>(), new getTable().gettable(BorrowerType.class,DataCollector.getAllBorrowerType())).buildForm());
-			borderpane.setRight(borrowerTypeSearchBox);
-		});
+    private void showLoanView() {
+        TableView<Loan> table = new getTable<Loan>().gettable(Loan.class, DataCollector.getAllLoan());
+        HBox searchBox = new SearchBox<Loan>().createSearchBox(Loan.class, DataCollector.getAllLoan(), table);
+        
+        // Loans are view-only for now
+        contentArea.setCenter(table);
+        contentArea.setBottom(new VBox());
+        contentArea.setRight(searchBox);
+    }
 
-		btnLoan.setOnAction(e -> {
-			borderpane.setCenter(new getTable<Loan>().gettable(Loan.class
-					,DataCollector.getAllLoan()));
-			borderpane.setBottom(new GenericFormBuilder(Loan.class,new Operation<Loan>(), new getTable().gettable(Loan.class,DataCollector.getAllLoan())).buildForm());
-			borderpane.setRight(loanSearchBox);
-		});
+    private void showSaleView() {
+        TableView<Sale> table = new getTable<Sale>().gettable(Sale.class, DataCollector.getAllSale());
+        HBox searchBox = new SearchBox<Sale>().createSearchBox(Sale.class, DataCollector.getAllSale(), table);
+        
+        // Sales are view-only for now
+        contentArea.setCenter(table);
+        contentArea.setBottom(new VBox());
+        contentArea.setRight(searchBox);
+    }
 
-		btnLoanPeriod.setOnAction(e -> {
-			borderpane.setCenter(new getTable<Loan>().gettable(Loan.class
-					,DataCollector.getAllLoan()));
-			borderpane.setBottom(new GenericFormBuilder(LoanPeriod.class,new Operation<LoanPeriod>(), new getTable().gettable(LoanPeriod.class,DataCollector.getAllLoanPeriod())).buildForm());
-			borderpane.setRight(loanPeriodSearchBox);
-		});
+    private void showBorrowerTypeView() {
+        TableView<BorrowerType> table = new getTable<BorrowerType>().gettable(BorrowerType.class, DataCollector.getAllBorrowerType());
+        HBox searchBox = new SearchBox<BorrowerType>().createSearchBox(BorrowerType.class, DataCollector.getAllBorrowerType(), table);
+        
+        contentArea.setCenter(table);
+        contentArea.setBottom(new VBox());
+        contentArea.setRight(searchBox);
+    }
 
-		btnPublisher.setOnAction(e -> {
-			borderpane.setCenter(new getTable<Publisher>().gettable(Publisher.class
-					,DataCollector.getAllPublisher()));
-			borderpane.setBottom(new GenericFormBuilder(Publisher.class,new Operation<Publisher>(), new getTable().gettable(Publisher.class,DataCollector.getAllPublisher())).buildForm());
-			borderpane.setRight(publisherSearchBox);
-		});
+    private void showLoanPeriodView() {
+        TableView<LoanPeriod> table = new getTable<LoanPeriod>().gettable(LoanPeriod.class, DataCollector.getAllLoanPeriod());
+        HBox searchBox = new SearchBox<LoanPeriod>().createSearchBox(LoanPeriod.class, DataCollector.getAllLoanPeriod(), table);
+        
+        contentArea.setCenter(table);
+        contentArea.setBottom(new VBox());
+        contentArea.setRight(searchBox);
+    }
 
-		btnSale.setOnAction(e -> {
-			borderpane.setCenter(new getTable<Sale>().gettable(Sale.class
-					,DataCollector.getAllSale()));
-			borderpane.setBottom(new GenericFormBuilder(Sale.class,new Operation<Sale>(), new getTable().gettable(Sale.class,DataCollector.getAllSale())).buildForm());
-			borderpane.setRight(saleSearchBox);
-		});
+    private void showReportsView() {
+        if (reportsView == null) {
+            reportsView = new ReportsView();
+        }
+        contentArea.setCenter(reportsView.getRoot());
+        contentArea.setBottom(null);
+        contentArea.setRight(null);
+    }
 
-		Scene scene = new Scene(borderpane, 1200, 800);
-		primaryStage.setTitle("Library App");
-		primaryStage.setScene(scene);
-		primaryStage.show();
-	}
+    private void showAboutView() {
+        if (aboutView == null) {
+            aboutView = new AboutView();
+        }
+        contentArea.setCenter(aboutView.getRoot());
+        contentArea.setBottom(null);
+        contentArea.setRight(null);
+    }
 
-	private void showAlert(Alert.AlertType type, String title, String message) {
-		Alert alert = new Alert(type);
-		alert.setTitle(title);
-		alert.setHeaderText(null);
-		alert.setContentText(message);
-		alert.showAndWait();
-	}
-
-	public static void main(String[] args) {
-		launch(args);
-	}
+    public static void main(String[] args) {
+        launch(args);
+    }
 }

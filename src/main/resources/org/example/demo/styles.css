@@ -1,0 +1,242 @@
+/* Library Management System - Main Stylesheet */
+
+.root {
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+    -fx-font-size: 14px;
+    -fx-background-color: #f5f5f5;
+}
+
+/* Buttons */
+.button {
+    -fx-background-color: #4CAF50;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 16px;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+}
+
+.button:hover {
+    -fx-background-color: #45a049;
+}
+
+.button:pressed {
+    -fx-background-color: #3d8b40;
+}
+
+.button:disabled {
+    -fx-background-color: #cccccc;
+    -fx-text-fill: #666666;
+    -fx-cursor: default;
+}
+
+/* Delete button - red */
+.button.delete-button {
+    -fx-background-color: #f44336;
+}
+
+.button.delete-button:hover {
+    -fx-background-color: #da190b;
+}
+
+/* Table Views */
+.table-view {
+    -fx-background-color: white;
+    -fx-border-color: #ddd;
+    -fx-border-width: 1px;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: #2196F3;
+}
+
+.table-view .column-header {
+    -fx-background-color: #2196F3;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 10px;
+}
+
+.table-view .table-cell {
+    -fx-padding: 8px;
+    -fx-border-color: #e0e0e0;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #bbdefb;
+}
+
+.table-row-cell:hover {
+    -fx-background-color: #e3f2fd;
+}
+
+/* Text Fields */
+.text-field {
+    -fx-background-color: white;
+    -fx-border-color: #ccc;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-padding: 6px;
+}
+
+.text-field:focused {
+    -fx-border-color: #2196F3;
+    -fx-border-width: 2px;
+}
+
+/* Labels */
+.label {
+    -fx-text-fill: #333;
+}
+
+.label.title {
+    -fx-text-fill: #1976D2;
+    -fx-font-size: 20px;
+}
+
+/* Login/Signup Views */
+.login-view, .signup-view {
+    -fx-background-color: linear-gradient(to bottom, #e3f2fd, #ffffff);
+    -fx-background-radius: 10px;
+}
+
+.about-view {
+    -fx-background-color: linear-gradient(to bottom, #f3e5f5, #ffffff);
+}
+
+/* Menu Bar */
+.menu-bar {
+    -fx-background-color: #2196F3;
+}
+
+.menu {
+    -fx-text-fill: white;
+}
+
+.menu-item {
+    -fx-text-fill: #333;
+}
+
+/* Tabs */
+.tab-pane {
+    -fx-background-color: white;
+}
+
+.tab {
+    -fx-background-color: #e0e0e0;
+    -fx-padding: 10px 20px;
+}
+
+.tab:selected {
+    -fx-background-color: #2196F3;
+    -fx-text-fill: white;
+}
+
+.tab:hover {
+    -fx-background-color: #bbdefb;
+}
+
+/* Combo Box */
+.combo-box {
+    -fx-background-color: white;
+    -fx-border-color: #ccc;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+}
+
+.combo-box:hover {
+    -fx-border-color: #2196F3;
+}
+
+/* Date Picker */
+.date-picker {
+    -fx-background-color: white;
+    -fx-border-color: #ccc;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+}
+
+/* Grid Pane (Forms) */
+.grid-pane {
+    -fx-background-color: white;
+    -fx-padding: 20px;
+    -fx-background-radius: 8px;
+}
+
+/* VBox and HBox */
+.vbox, .hbox {
+    -fx-spacing: 10px;
+}
+
+/* Border Pane */
+.border-pane {
+    -fx-background-color: #f5f5f5;
+}
+
+/* Search Box */
+.search-box {
+    -fx-background-color: white;
+    -fx-padding: 10px;
+    -fx-background-radius: 4px;
+}
+
+/* Alerts */
+.alert {
+    -fx-background-color: white;
+}
+
+.alert .header-panel {
+    -fx-background-color: #2196F3;
+}
+
+.alert .header-panel .label {
+    -fx-text-fill: white;
+}
+
+/* Version label */
+.version {
+    -fx-text-fill: #666;
+    -fx-font-style: italic;
+}
+
+/* Description text */
+.description {
+    -fx-text-fill: #555;
+    -fx-line-spacing: 4px;
+}
+
+/* Sidebar buttons */
+.sidebar-button {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #333;
+    -fx-border-color: #ddd;
+    -fx-border-width: 1px;
+    -fx-background-radius: 4px;
+    -fx-padding: 12px;
+    -fx-font-size: 14px;
+    -fx-alignment: center-left;
+}
+
+.sidebar-button:hover {
+    -fx-background-color: #e3f2fd;
+    -fx-border-color: #2196F3;
+}
+
+.sidebar-button:pressed {
+    -fx-background-color: #bbdefb;
+}
+
+/* Scroll Pane */
+.scroll-pane {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+/* Progress Indicator */
+.progress-indicator {
+    -fx-progress-color: #2196F3;
+}
+

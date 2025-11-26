@@ -14,23 +14,25 @@ public class getTable<E>{
     public TableView<E> gettable(Class<E> clazz, ObservableList<E> list) {
 
         TableView<E> tableView = new TableView<>();
-        ObservableList<E> bookList = null;
-        Constructor<?> constructor = clazz.getConstructors()[0];
-
-
-        for (int i = 0; i <clazz.getDeclaredFields().length; i++) {
-            Field[] f=clazz.getDeclaredFields();
-            TableColumn<E, String> name = new TableColumn<>(f[i].getName());
-            name.setCellValueFactory(new PropertyValueFactory<>(f[i].getName()));
-
-            tableView.getColumns().add(name);
+        
+        // Ensure list is never null
+        if (list == null) {
+            list = FXCollections.observableArrayList();
         }
 
-        tableView.setItems(FXCollections.observableArrayList(list));
+        // Create columns for all fields
+        Field[] fields = clazz.getDeclaredFields();
+        for (int i = 0; i < fields.length; i++) {
+            Field f = fields[i];
+            TableColumn<E, String> column = new TableColumn<>(f.getName());
+            column.setCellValueFactory(new PropertyValueFactory<>(f.getName()));
+            tableView.getColumns().add(column);
+        }
 
-        bookList = (ObservableList<E>) list;
-
-        tableView.setItems(bookList);
+        // Set items once with safe list
+        ObservableList<E> safeList = FXCollections.observableArrayList(list);
+        tableView.setItems(safeList);
+        
         return tableView;
     }
 

@@ -21,10 +21,20 @@ public class HelloController {
         private static final String USER = "root"; // change if needed
         private static final String PASSWORD = ""; // change if needed
 
+        static {
+            try {
+                Class.forName("com.mysql.cj.jdbc.Driver");
+            } catch (ClassNotFoundException e) {
+                System.err.println("MySQL JDBC Driver not found!");
+                e.printStackTrace();
+            }
+        }
+
         public static Connection getConnection() {
             try {
                 return DriverManager.getConnection(URL, USER, PASSWORD);
             } catch (SQLException e) {
+                System.err.println("Failed to connect to database: " + e.getMessage());
                 e.printStackTrace();
                 return null;
             }
