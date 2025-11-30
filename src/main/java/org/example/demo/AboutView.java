@@ -3,6 +3,8 @@ package org.example.demo;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.Image;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -29,6 +31,15 @@ public class AboutView {
         titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 28));
         titleLabel.getStyleClass().add("title");
 
+        // === Add profile image ===
+        ImageView profileImage = new ImageView(
+                "file:/C:/Users/Alhaneny/Pictures/375780b7-7959-4ecf-b57a-1c9cbf9438ba.jpeg"
+        );
+        profileImage.setFitWidth(200);
+        profileImage.setPreserveRatio(true);
+        profileImage.setSmooth(true);
+        profileImage.setCache(true);
+
         // Developer Information
         VBox infoBox = new VBox(15);
         infoBox.setAlignment(Pos.CENTER);
@@ -37,14 +48,13 @@ public class AboutView {
         Label developerLabel = new Label("Developed by:");
         developerLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
 
-        // TODO: Replace with your actual information
-        Label nameLabel = new Label("Your Name");
+        Label nameLabel = new Label("Abed Thawabtah");
         nameLabel.setFont(Font.font("Arial", 14));
 
-        Label studentIdLabel = new Label("Student ID: [Your Student ID]");
+        Label studentIdLabel = new Label("Student ID: 202303310");
         studentIdLabel.setFont(Font.font("Arial", 14));
 
-        Label emailLabel = new Label("Email: [your.email@example.com]");
+        Label emailLabel = new Label("Email: 202303310@gmail.com");
         emailLabel.setFont(Font.font("Arial", 14));
 
         Label universityLabel = new Label("Bethlehem University");
@@ -58,40 +68,38 @@ public class AboutView {
 
         Label versionLabel = new Label("Version 1.0");
         versionLabel.setFont(Font.font("Arial", 12));
-        versionLabel.getStyleClass().add("version");
 
         Label descriptionLabel = new Label(
-            "This application is a comprehensive Library Management System " +
-            "designed to manage books, authors, borrowers, loans, and sales. " +
-            "It includes user authentication, role-based access control, " +
-            "CRUD operations, and comprehensive reporting features."
+                "This application is a comprehensive Library Management System " +
+                        "designed to manage books, authors, borrowers, loans, and sales. " +
+                        "It includes user authentication, role-based access control, " +
+                        "CRUD operations, and comprehensive reporting features."
         );
         descriptionLabel.setWrapText(true);
         descriptionLabel.setTextAlignment(TextAlignment.CENTER);
         descriptionLabel.setMaxWidth(600);
         descriptionLabel.setFont(Font.font("Arial", 12));
-        descriptionLabel.getStyleClass().add("description");
 
         infoBox.getChildren().addAll(
-            developerLabel,
-            nameLabel,
-            studentIdLabel,
-            emailLabel,
-            new Label(""), // Spacer
-            universityLabel,
-            departmentLabel,
-            courseLabel,
-            new Label(""), // Spacer
-            descriptionLabel,
-            new Label(""), // Spacer
-            versionLabel
+                developerLabel,
+                nameLabel,
+                studentIdLabel,
+                emailLabel,
+                new Label(""),
+                universityLabel,
+                departmentLabel,
+                courseLabel,
+                new Label(""),
+                descriptionLabel,
+                new Label(""),
+                versionLabel
         );
 
-        root.getChildren().addAll(titleLabel, infoBox);
+        // Add EVERYTHING to root
+        root.getChildren().addAll(titleLabel, profileImage, infoBox);
     }
 
     public VBox getRoot() {
         return root;
     }
 }
-
