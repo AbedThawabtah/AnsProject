@@ -31,7 +31,18 @@ public class Book {
     public StringProperty book_typeProperty() { return book_type; }
     public DoubleProperty original_priceProperty() { return original_price; }
     public IntegerProperty availableProperty() { return available; }
-    
-    
+
+    @Override
+    public String toString() {
+        return "Book{" +
+                "book_id=" + book_id +
+                ", title=" + title +
+                ", publisher_id=" + publisher_id +
+                ", category=" + category +
+                ", book_type=" + book_type +
+                ", original_price=" + original_price +
+                ", available=" + available +
+                '}';
+    }
 }
 

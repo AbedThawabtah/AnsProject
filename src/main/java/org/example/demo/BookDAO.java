@@ -31,9 +31,12 @@ public class BookDAO implements GenericDAO<Book> {
                 
                 // Handle nullable publisher_id
                 int publisherId = book.publisher_idProperty().get();
-                if (publisherId <= 0) {
+                System.out.println("Adding book with publisher ID: " + publisherId);
+                if (publisherId <= 0 ) {
+                    System.out.println("Publisher ID is null or invalid, setting to NULL in database.");
                     pstmt.setNull(2, java.sql.Types.INTEGER);
-                } else {
+                }
+                else {
                     pstmt.setInt(2, publisherId);
                 }
                 
