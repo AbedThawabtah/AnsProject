@@ -4,15 +4,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-/**
- * Helper class to generate SHA-256 hashed passwords for seed data
- * Run this main method to generate hashed passwords for your INSERT statements
- */
 public class PasswordHashHelper {
-    
-    /**
-     * Hash password using SHA-256 (same as UserDAO)
-     */
+
     public static String hashPassword(String password) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
