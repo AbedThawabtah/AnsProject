@@ -64,11 +64,14 @@ public class GenericFormBuilder<T> {
         for (Field f : clazz.getDeclaredFields()) {
             if (f.getName().contains("id") && f.getName().contains(clazz.getSimpleName().toLowerCase())) continue; // skip ID (auto)
             f.setAccessible(true);
-
             Label label = new Label(capitalize(f.getName()) + ":");
             TextField input = new TextField();
             input.setPromptText(f.getName());
- if (f.getName().equals("publisher_id")) {
+            if(f.getName().equals("publisher_id")){
+                continue;
+            }
+
+ if (f.getName().equals("name")) {
     ComboBox<String> comboBox = new ComboBox<>();
     comboBox.setEditable(false);
     comboBox.setPromptText("select publisher");
@@ -82,9 +85,7 @@ public class GenericFormBuilder<T> {
     fieldInputs.put(f, comboBox);
     row++;
     continue;
-
-
-            }
+}
             form.add(label, 0, row);
             form.add(input, 1, row);
             fieldInputs.put(f, input);
@@ -327,21 +328,31 @@ public class GenericFormBuilder<T> {
                 for (Field f : fieldInputs.keySet()) {
                     f.setAccessible(true);
                     Object v = f.get(val);
-                    Object control = fieldInputs.get(f);
+                    Control control = fieldInputs.get(f);
                     if (v != null) {
-                        // Handle property objects
+                        System.out.println(
+                                "Field: " + f.getName() +
+                                        " actual control: " + control.getClass().getSimpleName()
+                        );
+
                         if (control instanceof ComboBox) {
+                            System.out.println("Setting ComboBox for field " + f.getName() + " to value: " + v);
                             ComboBox<String> comboBox = (ComboBox<String>) control;
                             if (v != null) {
                                 if (v instanceof javafx.beans.property.Property) {
                                     v = ((javafx.beans.property.Property<?>) v).getValue();
                                 }
+
+                                comboBox.setPromptText(v.toString());
                                 comboBox.setValue(v.toString());
                             } else {
-                                comboBox.setValue(null);
+                                comboBox.setPromptText("");
+                                comboBox.setValue(v.toString());
                             }
                         } else if (control instanceof TextField) {
                             TextField textField = (TextField) control;
+
+
                             if (v != null) {
                                 if (v instanceof javafx.beans.property.Property) {
                                     v = ((javafx.beans.property.Property<?>) v).getValue();
@@ -351,13 +362,17 @@ public class GenericFormBuilder<T> {
                                 textField.setText("");
                             }
                         }
+                        else
+                            System.out.println("Unknown control type for field " + f.getName());
                     }}}
                      catch (Exception ex) {
                         ex.printStackTrace();
-                    }
+                    }}
 
-        return form;
-    }
+        );  return form;}
+
+
+
 
     /**
      * Safe refresh method that never shows alerts
@@ -680,5 +695,5 @@ public class GenericFormBuilder<T> {
                 return ((TextField) entry.getValue()).getText().trim();
         }}
         return "";
-    }
-}
+    }}
+
