@@ -7,6 +7,7 @@ public class Book {
     private IntegerProperty book_id;
     private StringProperty title;
     private IntegerProperty publisher_id;
+    private StringProperty name;
     private StringProperty category;
     private StringProperty book_type;
     private DoubleProperty original_price;
@@ -22,6 +23,16 @@ public class Book {
         this.original_price = new SimpleDoubleProperty(original_price);
         this.available = new SimpleIntegerProperty(available);
     }
+    public Book(int book_id, String title, String name,
+                String category,String book_type, double original_price, int available) {
+        this.book_id = new SimpleIntegerProperty(book_id);
+        this.title = new SimpleStringProperty(title);
+        this.name = new SimpleStringProperty(name);
+        this.category = new SimpleStringProperty(category);
+        this.book_type = new SimpleStringProperty(book_type);
+        this.original_price = new SimpleDoubleProperty(original_price);
+        this.available = new SimpleIntegerProperty(available);
+    }
 
     // Getters for TableView binding
     public IntegerProperty book_idProperty() { return book_id; }
@@ -31,6 +42,7 @@ public class Book {
     public StringProperty book_typeProperty() { return book_type; }
     public DoubleProperty original_priceProperty() { return original_price; }
     public IntegerProperty availableProperty() { return available; }
+    public StringProperty nameProperty() { return name; }
 
     @Override
     public String toString() {

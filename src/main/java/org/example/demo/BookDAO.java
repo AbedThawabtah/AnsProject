@@ -159,7 +159,26 @@ public class BookDAO implements GenericDAO<Book> {
             return false;
         }
     }
+public  int getIDbyString(String name){
+        String sql = "SELECT name FROM publisher WHERE name = ?";
+        try (Connection conn = HelloController.DatabaseConnection.getConnection()) {
+            if (conn == null) return -1;
 
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, name);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt("publisher_id");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting publisher ID by name: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return -1; // Return -1 if not found or error occurs
+
+}
     @Override
     public Book getById(int id) {
         String sql = "SELECT * FROM book WHERE book_id = ?";
@@ -194,7 +213,7 @@ public class BookDAO implements GenericDAO<Book> {
     public List<Book> getAll() {
         // Always return a non-null list
         ObservableList<Book> books = FXCollections.observableArrayList();
-        String query = "SELECT * FROM book";
+        String query = "SELECT book_id, title, name, category, book_type, original_price, available FROM book left JOIN publisher ON book.publisher_id = publisher.publisher_id";
 
         try (Connection conn = HelloController.DatabaseConnection.getConnection()) {
             if (conn == null) {
@@ -209,7 +228,7 @@ public class BookDAO implements GenericDAO<Book> {
                         Book book = new Book(
                                 rs.getInt("book_id"),
                                 rs.getString("title"),
-                                rs.getInt("publisher_id"),
+                                rs.getString("name"),
                                 rs.getString("category"),
                                 rs.getString("book_type"),
                                 rs.getDouble("original_price"),

@@ -56,7 +56,7 @@ public class GenericFormBuilder<T> {
         form.setHgap(8);
         form.setVgap(8);
 
-        Map<Field, TextField> fieldInputs = new LinkedHashMap<>();
+        Map<Field, Control> fieldInputs = new LinkedHashMap<>();
 
         int row = 0;
 
@@ -68,7 +68,23 @@ public class GenericFormBuilder<T> {
             Label label = new Label(capitalize(f.getName()) + ":");
             TextField input = new TextField();
             input.setPromptText(f.getName());
+ if (f.getName().equals("publisher_id")) {
+    ComboBox<String> comboBox = new ComboBox<>();
+    comboBox.setEditable(false);
+    comboBox.setPromptText("select publisher");
+    for (Publisher p : DataCollector.getAllPublisher()) {
+        comboBox.getItems().add(p.nameProperty().get());
+    }
+    Label label2= new Label("publisher names:");
 
+    form.add(label2, 0, row);
+    form.add(comboBox, 1, row);
+    fieldInputs.put(f, comboBox);
+    row++;
+    continue;
+
+
+            }
             form.add(label, 0, row);
             form.add(input, 1, row);
             fieldInputs.put(f, input);
@@ -119,7 +135,11 @@ public class GenericFormBuilder<T> {
                 if (success) {
                     showAlert(Alert.AlertType.INFORMATION, "Success", "Record added successfully!");
                     // Clear all input fields
-                    fieldInputs.values().forEach(TextField::clear);
+                    fieldInputs.values().forEach(c -> {
+                        if (c instanceof TextField tf) {
+                            tf.clear();
+                        }
+                    });
                     
                     // Update TableView: reload from database to get auto-generated ID
                     if (reloadCallback != null && observableList != null) {
@@ -177,7 +197,7 @@ public class GenericFormBuilder<T> {
 
                 // Update all fields from form inputs
                 for (Field f : fieldInputs.keySet()) {
-                    String value = fieldInputs.get(f).getText().trim();
+                    String value = ((TextField) fieldInputs.get(f)).getText().trim();
                     // Skip ID fields (they shouldn't be updated)
                     if (f.getName().toLowerCase().endsWith("_id")) {
                         continue;
@@ -232,7 +252,6 @@ public class GenericFormBuilder<T> {
                 showAlert(Alert.AlertType.WARNING, "No Selection", "Please select a record to delete.");
                 return;
             }
-            
             // Confirmation dialog
             Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
             confirmAlert.setTitle("Confirm Delete");
@@ -253,8 +272,14 @@ public class GenericFormBuilder<T> {
                     if (success) {
                         showAlert(Alert.AlertType.INFORMATION, "Success", "Record deleted successfully!");
                         // Clear input fields
-                        fieldInputs.values().forEach(TextField::clear);
-                        
+
+                                fieldInputs.values().forEach(c -> {
+                                    if (c instanceof TextField tf) {
+                                        tf.clear();
+                                    }
+                                });
+
+
                         // Update TableView: remove from ObservableList directly
                         if (observableList != null) {
                             // Remove the selected item directly from the list
@@ -286,7 +311,14 @@ public class GenericFormBuilder<T> {
         });
 
         // Clear
-        btnClear.setOnAction(e -> fieldInputs.values().forEach(TextField::clear));
+        btnClear.setOnAction(e ->
+                fieldInputs.values().forEach(c -> {
+                    if (c instanceof TextField tf) {
+                        tf.clear();
+                    }
+                })
+        );
+
 
         // Table selection listener
         table.getSelectionModel().selectedItemProperty().addListener((obs, old, val) -> {
@@ -295,22 +327,34 @@ public class GenericFormBuilder<T> {
                 for (Field f : fieldInputs.keySet()) {
                     f.setAccessible(true);
                     Object v = f.get(val);
+                    Object control = fieldInputs.get(f);
                     if (v != null) {
                         // Handle property objects
-                        if (v instanceof javafx.beans.property.Property) {
-                            Object propValue = ((javafx.beans.property.Property<?>) v).getValue();
-                            fieldInputs.get(f).setText(propValue == null ? "" : propValue.toString());
-                        } else {
-                            fieldInputs.get(f).setText(v.toString());
+                        if (control instanceof ComboBox) {
+                            ComboBox<String> comboBox = (ComboBox<String>) control;
+                            if (v != null) {
+                                if (v instanceof javafx.beans.property.Property) {
+                                    v = ((javafx.beans.property.Property<?>) v).getValue();
+                                }
+                                comboBox.setValue(v.toString());
+                            } else {
+                                comboBox.setValue(null);
+                            }
+                        } else if (control instanceof TextField) {
+                            TextField textField = (TextField) control;
+                            if (v != null) {
+                                if (v instanceof javafx.beans.property.Property) {
+                                    v = ((javafx.beans.property.Property<?>) v).getValue();
+                                }
+                                textField.setText(v.toString());
+                            } else {
+                                textField.setText("");
+                            }
                         }
-                    } else {
-                        fieldInputs.get(f).setText("");
+                    }}}
+                     catch (Exception ex) {
+                        ex.printStackTrace();
                     }
-                }
-            } catch (Exception ex) { 
-                ex.printStackTrace(); 
-            }
-        });
 
         return form;
     }
@@ -434,7 +478,7 @@ public class GenericFormBuilder<T> {
     /**
      * Validate required fields based on NOT NULL constraints
      */
-    private String validateRequiredFields(Map<Field, TextField> fieldInputs) {
+    private String validateRequiredFields(Map<Field, Control> fieldInputs) {
         String className = clazz.getSimpleName();
         
         // Author: first_name, last_name are NOT NULL
@@ -480,10 +524,10 @@ public class GenericFormBuilder<T> {
         return null; // No validation errors
     }
 
-    private String getFieldValueByName(String fieldName, Map<Field, TextField> fieldInputs) {
-        for (Map.Entry<Field, TextField> entry : fieldInputs.entrySet()) {
+    private String getFieldValueByName(String fieldName, Map<Field, Control> fieldInputs) {
+        for (Map.Entry<Field, Control> entry : fieldInputs.entrySet()) {
             if (entry.getKey().getName().equals(fieldName)) {
-                return entry.getValue().getText().trim();
+                return ((TextField) entry.getValue()).getText().trim();
             }
         }
         return null;
@@ -492,11 +536,18 @@ public class GenericFormBuilder<T> {
     /**
      * Validate field formats (numbers, etc.)
      */
-    private boolean validateFields(Map<Field, TextField> fieldInputs) {
-        for (Map.Entry<Field, TextField> entry : fieldInputs.entrySet()) {
+    private boolean validateFields(Map<Field, Control> fieldInputs) {
+        for (Map.Entry<Field, Control> entry : fieldInputs.entrySet()) {
             Field f = entry.getKey();
-            TextField tf = entry.getValue();
-            String value = tf.getText().trim();
+            String value="";
+            if (entry.getValue() instanceof TextField) {
+            TextField tf = (TextField) entry.getValue();
+                value = tf.getText().trim();}
+            else {
+                ComboBox<String> tf=(ComboBox<String>) entry.getValue();
+                value= String.valueOf(new BookDAO().getIDbyString(tf.getValue()));
+            }
+
             
             // Skip ID fields (auto-generated)
             if (f.getName().toLowerCase().endsWith("_id") && f.getName().toLowerCase().contains("id")) {
@@ -556,7 +607,7 @@ public class GenericFormBuilder<T> {
     }
 
     @SuppressWarnings("unchecked")
-    private T createNewInstance(Map<Field, TextField> fieldInputs) throws Exception {
+    private T createNewInstance(Map<Field, Control> fieldInputs) throws Exception {
         // Get all declared fields in order
         Field[] fields = clazz.getDeclaredFields();
         java.util.List<Object> constructorArgs = new java.util.ArrayList<>();
@@ -623,12 +674,11 @@ public class GenericFormBuilder<T> {
         return (T) constructor.newInstance(constructorArgs.toArray());
     }
 
-    private String getFieldValue(Field f, Map<Field, TextField> fieldInputs) {
-        for (Map.Entry<Field, TextField> entry : fieldInputs.entrySet()) {
+    private String getFieldValue(Field f, Map<Field, Control> fieldInputs) {
+        for (Map.Entry<Field, Control> entry : fieldInputs.entrySet()) {
             if (entry.getKey().getName().equals(f.getName())) {
-                return entry.getValue().getText().trim();
-            }
-        }
+                return ((TextField) entry.getValue()).getText().trim();
+        }}
         return "";
     }
 }

@@ -246,7 +246,7 @@ public class LibraryApp extends Application {
         
         boolean canEdit = SessionManager.canEdit();
         GenericFormBuilder<Book> formBuilder = new GenericFormBuilder<>(
-            Book.class, 
+            Book.class,
             bookDAO, 
             bookTable,
             bookList,

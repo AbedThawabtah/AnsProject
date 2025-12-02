@@ -14,7 +14,7 @@ public class getTable<E>{
     public TableView<E> gettable(Class<E> clazz, ObservableList<E> list) {
 
         TableView<E> tableView = new TableView<>();
-        
+
         // Ensure list is never null
         if (list == null) {
             list = FXCollections.observableArrayList();
@@ -25,15 +25,27 @@ public class getTable<E>{
         for (int i = 0; i < fields.length; i++) {
             Field f = fields[i];
             TableColumn<E, String> column = new TableColumn<>(f.getName());
-            column.setCellValueFactory(new PropertyValueFactory<>(f.getName()));
-            tableView.getColumns().add(column);
+            if (f.getName().equals("publisher_id") && clazz.getSimpleName().equals("Book")) {
+                continue;
+            }
+            else if (f.getName().equals("name") ) {
+
+                    column.setCellValueFactory(new PropertyValueFactory<>("name"));
+                    tableView.getColumns().add(column);
+                    continue;
+                }
+
+
+                column.setCellValueFactory(new PropertyValueFactory<>(f.getName()));
+                tableView.getColumns().add(column);
+            }
+
+            // Set items once with safe list
+            ObservableList<E> safeList = FXCollections.observableArrayList(list);
+            tableView.setItems(safeList);
+
+            return tableView;
         }
 
-        // Set items once with safe list
-        ObservableList<E> safeList = FXCollections.observableArrayList(list);
-        tableView.setItems(safeList);
-        
-        return tableView;
     }
 
-}
