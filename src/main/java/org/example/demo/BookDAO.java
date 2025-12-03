@@ -65,7 +65,8 @@ public class BookDAO implements GenericDAO<Book> {
                 }
                 
                 // available defaults to 1 if not set
-                int available = book.availableProperty().get();
+                int available = book.availableProperty().get().equals("1") ? 1 : 0;
+                System.out.println("Adding book with available: " + available);
                 pstmt.setInt(6, available > 0 ? 1 : 0);
                 
                 int rowsAffected = pstmt.executeUpdate();
@@ -128,9 +129,9 @@ public class BookDAO implements GenericDAO<Book> {
                     pstmt.setDouble(5, price);
                 }
                 
-                pstmt.setInt(6, book.availableProperty().get() > 0 ? 1 : 0);
+                pstmt.setInt(6, book.availableProperty().get().equals("Yes") ? 1 : 0);
                 pstmt.setInt(7, book.book_idProperty().get());
-                
+                System.out.println(pstmt);
                 int rowsAffected = pstmt.executeUpdate();
                 return rowsAffected > 0;
             }
@@ -160,12 +161,14 @@ public class BookDAO implements GenericDAO<Book> {
         }
     }
 public  int getIDbyString(String name){
-        String sql = "SELECT name FROM publisher WHERE name = ?";
+        String sql = "SELECT publisher_id,name FROM publisher WHERE name = ?";
+        System.out.println(name);
         try (Connection conn = HelloController.DatabaseConnection.getConnection()) {
             if (conn == null) return -1;
 
             try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
                 pstmt.setString(1, name);
+                System.out.println(pstmt);
                 try (ResultSet rs = pstmt.executeQuery()) {
                     if (rs.next()) {
                         return rs.getInt("publisher_id");
@@ -197,7 +200,7 @@ public  int getIDbyString(String name){
                             rs.getString("category"),
                             rs.getString("book_type"),
                             rs.getDouble("original_price"),
-                            rs.getInt("available")
+                            rs.getInt("available")>0? "Yes": "No"
                         );
                     }
                 }
@@ -213,7 +216,7 @@ public  int getIDbyString(String name){
     public List<Book> getAll() {
         // Always return a non-null list
         ObservableList<Book> books = FXCollections.observableArrayList();
-        String query = "SELECT book_id, title, name, category, book_type, original_price, available FROM book left JOIN publisher ON book.publisher_id = publisher.publisher_id";
+        String query = "SELECT book_id,title,publisher.publisher_id, name, category, book_type, original_price, available FROM book  left JOIN publisher ON book.publisher_id = publisher.publisher_id";
 
         try (Connection conn = HelloController.DatabaseConnection.getConnection()) {
             if (conn == null) {
@@ -227,12 +230,14 @@ public  int getIDbyString(String name){
                     try {
                         Book book = new Book(
                                 rs.getInt("book_id"),
+                                rs.getInt("publisher_id"),
                                 rs.getString("title"),
                                 rs.getString("name"),
                                 rs.getString("category"),
                                 rs.getString("book_type"),
                                 rs.getDouble("original_price"),
-                                rs.getInt("available"));
+                                rs.getInt("available")>0 ? "Yes": "No"
+                                );
                         books.add(book);
                     } catch (Exception e) {
                         // Skip invalid records, continue with others

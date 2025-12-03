@@ -1,5 +1,7 @@
 package org.example.demo;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -62,14 +64,14 @@ public class GenericFormBuilder<T> {
 
 
         for (Field f : clazz.getDeclaredFields()) {
-            if (f.getName().contains("id") && f.getName().contains(clazz.getSimpleName().toLowerCase())) continue; // skip ID (auto)
+            if (f.getName().contains("id") && f.getName().contains(clazz.getSimpleName().toLowerCase())|| f.getName().equals("publisher_id"))
+                continue;
+             ; // skip ID (auto)
             f.setAccessible(true);
             Label label = new Label(capitalize(f.getName()) + ":");
             TextField input = new TextField();
             input.setPromptText(f.getName());
-            if(f.getName().equals("publisher_id")){
-                continue;
-            }
+
 
  if (f.getName().equals("name")) {
     ComboBox<String> comboBox = new ComboBox<>();
@@ -86,6 +88,19 @@ public class GenericFormBuilder<T> {
     row++;
     continue;
 }
+ else if (f.getName().equals("available")) {
+                ComboBox<String> comboBox = new ComboBox<>();
+                comboBox.setEditable(false);
+                comboBox.setPromptText("Is Available?");
+                comboBox.getItems().addAll("Yes", "No");
+                Label label2= new Label("Available:");
+
+                form.add(label2, 0, row);
+                form.add(comboBox, 1, row);
+                fieldInputs.put(f, comboBox);
+                row++;
+                continue;
+            }
             form.add(label, 0, row);
             form.add(input, 1, row);
             fieldInputs.put(f, input);
@@ -140,6 +155,10 @@ public class GenericFormBuilder<T> {
                         if (c instanceof TextField tf) {
                             tf.clear();
                         }
+                        else if (c instanceof ComboBox<?> cb){
+                            cb.setValue(null);
+                           cb.setPromptText(cb.getPromptText());
+                           }
                     });
                     
                     // Update TableView: reload from database to get auto-generated ID
@@ -178,6 +197,7 @@ public class GenericFormBuilder<T> {
         // Update
         btnUpdate.setOnAction(e -> {
             T selected = table.getSelectionModel().getSelectedItem();
+            System.out.println("Selected item: " + selected);
             if (selected == null) {
                 showAlert(Alert.AlertType.WARNING, "No Selection", "Please select a record to update.");
                 return;
@@ -198,21 +218,46 @@ public class GenericFormBuilder<T> {
 
                 // Update all fields from form inputs
                 for (Field f : fieldInputs.keySet()) {
+                    if(fieldInputs.get(f) instanceof TextField) {
                     String value = ((TextField) fieldInputs.get(f)).getText().trim();
-                    // Skip ID fields (they shouldn't be updated)
-                    if (f.getName().toLowerCase().endsWith("_id")) {
-                        continue;
+                    if(f.getName().equals("publisher_id")){
+                    continue;
                     }
-                    // Set field value (handles empty strings as null for nullable fields)
+
                     setFieldValue(selected, f, value);
                 }
-                
+                    else {
+                        ComboBox<String> comboBox=(ComboBox<String>) fieldInputs.get(f);
+                        String value= comboBox.getValue();
+                        // Skip ID fields (they shouldn't be updated)
+                        if(f.getName().equals("name")){
+                            Field publisherField = clazz.getDeclaredField("publisher_id");
+
+
+
+                            setFieldValue(selected,publisherField, new BookDAO().getIDbyString(value)+"");
+
+                        }
+
+                        // Set field value (handles empty strings as null for nullable fields)
+                        setFieldValue(selected, f, value);
+                    }
+
+                }
+                System.out.println("Updated instance: " + selected);
                 // Attempt to update
                 boolean success = dao.update(selected);
                 
                 if (success) {
                     showAlert(Alert.AlertType.INFORMATION, "Success", "Record updated successfully!");
-                    
+                    for (final Field f : fieldInputs.keySet()) {
+                       if(fieldInputs.get(f) instanceof TextField) {
+                        ((TextField) fieldInputs.get(f)).clear();
+                       }
+                       else {
+                           ((ComboBox<String>) fieldInputs.get(f)).setValue("");
+                       }
+                    }
                     // Update TableView: reload from database to get latest data
                     if (reloadCallback != null && observableList != null) {
                         // Reload from database and update ObservableList
@@ -278,6 +323,10 @@ public class GenericFormBuilder<T> {
                                     if (c instanceof TextField tf) {
                                         tf.clear();
                                     }
+                                    else if (c instanceof ComboBox<?> cb){
+                                        cb.setValue(null);
+                                       cb.setPromptText(cb.getPromptText());
+                                       }
                                 });
 
 
@@ -313,11 +362,17 @@ public class GenericFormBuilder<T> {
 
         // Clear
         btnClear.setOnAction(e ->
-                fieldInputs.values().forEach(c -> {
+                fieldInputs.values().forEach(c-> {
                     if (c instanceof TextField tf) {
                         tf.clear();
                     }
-                })
+                    else if (c instanceof ComboBox<?> cb){
+                        cb.setValue(null);
+                       cb.setPromptText(cb.getPromptText());
+                       }
+
+                    }
+                )
         );
 
 
@@ -343,11 +398,9 @@ public class GenericFormBuilder<T> {
                                     v = ((javafx.beans.property.Property<?>) v).getValue();
                                 }
 
-                                comboBox.setPromptText(v.toString());
                                 comboBox.setValue(v.toString());
                             } else {
-                                comboBox.setPromptText("");
-                                comboBox.setValue(v.toString());
+                                comboBox.setValue(null);
                             }
                         } else if (control instanceof TextField) {
                             TextField textField = (TextField) control;
@@ -633,7 +686,14 @@ public class GenericFormBuilder<T> {
             Class<?> fieldType = f.getType();
             String fieldName = f.getName();
             String value = getFieldValue(f, fieldInputs);
-            
+            System.out.println(value+" for field "+fieldName);
+            if(fieldName.equals("publisher_id"))
+              continue;
+            else if(fieldName.equals("name"))
+            {
+                value= String.valueOf(new BookDAO().getIDbyString(value));
+             fieldType=int.class;
+            }
             // Handle JavaFX properties - get the actual type
             if (javafx.beans.property.Property.class.isAssignableFrom(fieldType)) {
                 // Determine the property type
@@ -683,7 +743,7 @@ public class GenericFormBuilder<T> {
                 }
             }
         }
-        
+        System.out.println("constructorArgs: " + constructorArgs);
         // Find and call constructor
         java.lang.reflect.Constructor<?> constructor = clazz.getConstructor(paramTypes.toArray(new Class[0]));
         return (T) constructor.newInstance(constructorArgs.toArray());
@@ -692,6 +752,14 @@ public class GenericFormBuilder<T> {
     private String getFieldValue(Field f, Map<Field, Control> fieldInputs) {
         for (Map.Entry<Field, Control> entry : fieldInputs.entrySet()) {
             if (entry.getKey().getName().equals(f.getName())) {
+                if(entry.getValue() instanceof ComboBox && f.getName().equals("name")){
+                    ComboBox<String> tf=(ComboBox<String>) entry.getValue();
+                    return tf.getValue()==null ? "" : tf.getValue();
+                }
+                else if(entry.getValue()instanceof ComboBox && f.getName().equals("available")){
+                    ComboBox<String> tf=(ComboBox<String>) entry.getValue();
+                    return  tf.getValue().equals("Yes") ? "1":"0";
+                }
                 return ((TextField) entry.getValue()).getText().trim();
         }}
         return "";

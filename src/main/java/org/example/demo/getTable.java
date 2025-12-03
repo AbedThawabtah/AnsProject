@@ -25,10 +25,8 @@ public class getTable<E>{
         for (int i = 0; i < fields.length; i++) {
             Field f = fields[i];
             TableColumn<E, String> column = new TableColumn<>(f.getName());
-            if (f.getName().equals("publisher_id") && clazz.getSimpleName().equals("Book")) {
-                continue;
-            }
-            else if (f.getName().equals("name") ) {
+
+             if (f.getName().equals("name") ) {
 
                     column.setCellValueFactory(new PropertyValueFactory<>("name"));
                     tableView.getColumns().add(column);
@@ -37,6 +35,10 @@ public class getTable<E>{
 
 
                 column.setCellValueFactory(new PropertyValueFactory<>(f.getName()));
+             if(f.getName().equals("publisher_id") ) {
+                 column.setVisible(false);
+
+             }
                 tableView.getColumns().add(column);
             }
 

@@ -57,7 +57,8 @@ public class DataCollector {
                             rs.getString("category"),
                             rs.getString("book_type"),
                             rs.getDouble("original_price"),
-                            rs.getInt("available"));
+                            rs.getInt("available")>0?"Yes":"No"
+                    );
 
                     books.add(book);
                 }
